@@ -7,7 +7,6 @@ import Usuarios from "../models/Usuario.js";
 class AuthService {
     async login(dto) {
         const usuario = await Usuarios.findOne({'usuario': dto.usuario}, {});
-
         if (!usuario) {
             throw new Error('Usuario não cadastrado')
         }
@@ -26,8 +25,13 @@ class AuthService {
         }, process.env.SECRET, {
             expiresIn: 8640000
         })
-
-        return { accessToken }        
+    
+        const dadosRetorno = {
+            accessToken: accessToken,
+            nome: usuario.nome,
+            id: usuario._id
+        }
+        return dadosRetorno; 
     }
 }
 
