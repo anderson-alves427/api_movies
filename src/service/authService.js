@@ -6,12 +6,12 @@ import Usuarios from "../models/Usuario.js";
 
 class AuthService {
     async login(dto) {
-        const usuario = await Usuarios.findOne({'usuario': dto.usuario}, {});
+        const usuario = await Usuarios.findOne({'user': dto.usuario}, {});
         if (!usuario) {
             throw new Error('Usuario não cadastrado')
         }
 
-        const senhaIguais = await bcrypt.compare(dto.senha, usuario.senha)
+        const senhaIguais = await bcrypt.compare(dto.senha, usuario.password)
         .then(res => res)
         .catch(error => error);
 
@@ -21,14 +21,14 @@ class AuthService {
         
         const accessToken = jsonwebtoken.sign({
             id: usuario._id,
-            usuario: usuario.usuario
+            usuario: usuario.user
         }, process.env.SECRET, {
             expiresIn: 8640000
         })
     
         const dadosRetorno = {
             accessToken: accessToken,
-            nome: usuario.nome,
+            nome: usuario.name,
             id: usuario._id
         }
         return dadosRetorno; 

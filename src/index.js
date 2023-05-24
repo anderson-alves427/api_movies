@@ -17,7 +17,7 @@ routes(app);
 const port = process.env.PORT || 8080;
 
 app.listen(port, () => {
-    console.log('Servidor ok')
+    console.log('Servidor ok');
 })
 
 export default app;
