@@ -6,7 +6,7 @@ dotenv.config();
 class FimeService {
     async listaFilmes() {
         try {
-            const response = await axios.get(`${process.env.URL_IMDB}AdvancedSearch/${process.env.API_KEY_IMDB}?https://imdb-api.com/API/AdvancedSearch/k_tgmlbis7?title_type=feature&countries=br&sort=release_date,desc`);
+            const response = await axios.get(`${process.env.URL_IMDB}AdvancedSearch/${process.env.API_KEY_IMDB}?release_date=2023-01-23,2023-05-23&countries=br`);
 
             if (response.data.errorMessage) {
                 throw new Error(response.data.errorMessage);
