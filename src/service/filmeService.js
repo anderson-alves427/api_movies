@@ -6,10 +6,14 @@ dotenv.config();
 class FimeService {
     async listaFilmes() {
         try {
-            const response = await axios.get(`${process.env.URL_IMDB}AdvancedSearch/${process.env.API_KEY_IMDB}?title_type=feature&countries=br&sort=release_date,desc`);
+            const response = await axios.get(`${process.env.URL_IMDB}AdvancedSearch/${process.env.API_KEY_IMDB}?https://imdb-api.com/API/AdvancedSearch/k_tgmlbis7?title_type=feature&countries=br&sort=release_date,desc`);
+
+            if (response.data.errorMessage) {
+                throw new Error(response.data.errorMessage);
+            }
             return response.data.results.slice(0, 10);
         } catch (error) {
-            console.log('Errona listagem de filmes imdb', error);
+            console.log('Erro na listagem de filmes imdb', error);
             throw new Error('Erro ao listar filmes na api do imdb');
         }
     }
@@ -20,10 +24,8 @@ class FimeService {
            if (!filmeImdb.id) {
                 throw new Error('Filme não existe no catálogo do Imdb');
            }
-
-           const filmeCurtido = await Curtidas.findOne({'id_movie_imdb': id_filme, 'id_user': usuario}, {});
-
-            if (filmeCurtido) {
+           const filmeCurtido = await Curtidas.find({'id_movie_imdb': id_filme, 'id_user': usuario}, {});
+            if (filmeCurtido.length) {
                 throw new Error('Filme já curtido.');
             }
 
@@ -38,7 +40,25 @@ class FimeService {
 
             return curtida;
         } catch (error) {
-            throw new Error(error);
+            console.log('Erro na listagem de filmes por id no imdb', error);
+            const newError = new Error(error.message);
+            newError.stack = error.stack;
+            throw newError;
+        }
+    }
+
+    async verificaFilmeCurtido(id_filme, usuario) {
+        try {
+            const filmeCurtido = await Curtidas.find({'id_movie_imdb': id_filme, 'id_user': usuario}, {});
+            if(!filmeCurtido.length) {
+                return false;
+            }
+            return true;
+        } catch (error) {
+            console.log('Erro na listagem de filmes', error);
+            const newError = new Error(error);
+            newError.stack = error.stack;
+            throw newError;
         }
     }
 
@@ -49,13 +69,13 @@ class FimeService {
             throw new Error('Filme não existe no catálogo do Imdb');
            }
 
-           const filmeCurtido = await Curtidas.findOne({'id_filme_imdb': id_filme, 'id_usuario': usuario}, {});
-
-            if (!filmeCurtido) {
+           const filmeCurtido = await Curtidas.find({'id_movie_imdb': id_filme, 'id_user': usuario}, {});
+           
+            if (!filmeCurtido.length) {
                 throw new Error('Filme nunca foi curtido.');
             }
 
-            await Curtidas.findByIdAndDelete(filmeCurtido._id);
+            await Curtidas.findByIdAndDelete(filmeCurtido[0]._id);
             return {
                 message: "Filme descurtido com sucesso."
             };
@@ -67,10 +87,17 @@ class FimeService {
     async listaFilmesPorIdImdbApi(id) {
         try {
             const response = await axios.get(`https://imdb-api.com/pt-BR/API/Title/${process.env.API_KEY_IMDB}/${id}`); 
+
+            if (response.data.errorMessage) {
+                throw new Error(response.data.errorMessage);
+            }
+
             return response.data;   
         } catch (error) {
             console.log('Erro na listagem de filmes por id no imdb', error);
-            throw new Error('Erro ao listar filmes por id na api do imdb');
+            const newError = new Error(error.message);
+            newError.stack = error.stack;
+            throw newError;
         }
     }
 
@@ -78,14 +105,17 @@ class FimeService {
         try {
             const listaFilmes = await Curtidas.aggregate([
                 {
-                $group: {
-                    _id: '$id_filme_imdb',
+                  $group: {
+                    _id: '$id_movie_imdb',
                     count: { $sum: 1 },
+                    title: { $addToSet: '$title' },
+                    plot: { $addToSet: '$plot' },
+                    image: { $addToSet: '$image' },
+                  }
                 }
-                }
-            ]);""
-            const dadosFilmes = listaFilmes.map(filme => this.listaFilmesPorIdImdbApi(filme._id));
-            return await Promise.all(dadosFilmes);;
+              ]);
+              
+              return listaFilmes;
         } catch (error) {
             console.log(error)
             throw new Error('Erro ao listar filmes curtidos');

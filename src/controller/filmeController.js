@@ -18,7 +18,17 @@ class FilmeController {
             const filmes = await filmeService.curtida(id_filme, req.headers.user.id);
             res.status(200).send(filmes);
         } catch (error) {
-            res.send({ message: error.message});
+            res.status(500).send({ message: error.message});
+        }
+    }
+
+    static async verificaFilmeCurtido(req, res) {
+        const { id_filme } = req.params;
+        try {
+            const filmes = await filmeService.verificaFilmeCurtido(id_filme, req.headers.user.id);
+            res.status(200).send(filmes);
+        } catch (error) {
+            res.status(500).send({ message: error.message});
         }
     }
 
